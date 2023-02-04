@@ -19,11 +19,12 @@ public:
    int send(char *msg, int msgSize);
 
 private:
+   const int MAX_REQUESTS = 20;
    const char *port;
    const char *address;
    int sd;
 
-   int createClientTcpSocket(const char *port, const char *server);
+   int createTcpSocket(const char *port, const char *server);
    int createNewSocket(addrinfo *servInfo);
 };
 

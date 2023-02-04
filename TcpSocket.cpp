@@ -5,9 +5,10 @@
 
 using namespace std;
 
+// create client
 TcpSocket::TcpSocket(const char *port, const char *address) : port(port), address(address)
 {
-   sd = createClientTcpSocket(port, address);
+   sd = createTcpSocket(port, address);
    if (sd < 0)
    {
       throw runtime_error("Could not connect to TCP server at " + *address + ':' + *port);
@@ -17,9 +18,14 @@ TcpSocket::TcpSocket(const char *port, const char *address) : port(port), addres
 TcpSocket::TcpSocket(const char *port) : port(port), address(nullptr)
 {
    // create server
+   sd = createTcpSocket(port, NULL);
+   if (sd < 0)
+   {
+      throw runtime_error("Could not start TCP server at port " + *port);
+   }
 }
 
-int TcpSocket::createClientTcpSocket(const char *port, const char *server)
+int TcpSocket::createTcpSocket(const char *port, const char *server)
 {
    // create server info structure
    struct addrinfo hints, *servInfo; // loaded with getaddrinfo()
@@ -42,24 +48,49 @@ int TcpSocket::createClientTcpSocket(const char *port, const char *server)
 int TcpSocket::createNewSocket(addrinfo *servInfo)
 {
    // make a socket, bind it, listen to it
-   int clientSd = socket(servInfo->ai_family, servInfo->ai_socktype,
-                         servInfo->ai_protocol);
-   if (clientSd < 0)
+   int sd = socket(servInfo->ai_family, servInfo->ai_socktype,
+                   servInfo->ai_protocol);
+   if (sd < 0)
    {
       cerr << "Socket creation error!" << errno << endl;
 
       return -1;
    }
    // lose pesky "Address already in use" error message
-   int status = connect(clientSd, servInfo->ai_addr, servInfo->ai_addrlen);
-   if (status < 0)
+   const int yes = 1;
+   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes)) < 0)
    {
-      cerr << "Failed to connect to the server" << errno << endl;
-
-      return -1;
+      cerr << "Set Socket Option Error!" << endl;
    }
 
-   return clientSd;
+   // if no server given, this is a server, bind port, listen to it
+   if (servInfo->ai_addrlen < 1)
+   {
+      if (bind(sd, servInfo->ai_addr, servInfo->ai_addrlen) < 0)
+      {
+         close(sd);
+         cerr << "server: bind " << errno << endl;
+         return -1;
+      }
+      if (listen(sd, MAX_REQUESTS) < 0)
+      {
+         cerr << "listen error" << errno << endl;
+         close(sd);
+         return -1;
+      }
+   }
+   else
+   { // client. connect to server
+      int status = connect(sd, servInfo->ai_addr, servInfo->ai_addrlen);
+      if (status < 0)
+      {
+         cerr << "Failed to connect to the server" << errno << endl;
+
+         return -1;
+      }
+   }
+
+   return sd;
 }
 
 int TcpSocket::send(char *msg, int msgSize)
