@@ -9,6 +9,8 @@ COMMAND_INTERVAL = 0.5
 EEG_PORT = 26783
 # IP of Gizmo
 GIZMO_IP = '10.65.65.87'
+# HTTP server port that gizmo's controller server uses
+GIZMO_HTTP_SERVER_PORT = 5000
 # Port that Gizmo's head direction program is sending to
 GIZMO_PORT = 26784
 # IP of this base station
