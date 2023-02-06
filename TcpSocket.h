@@ -9,6 +9,7 @@ using namespace std;
 #include <sys/socket.h>
 #include <sys/types.h> // for sockets
 #include <unistd.h>
+#include <functional>
 
 class TcpSocket
 {
@@ -18,6 +19,15 @@ public:
 
    int send(char *msg, int msgSize);
 
+   /**
+    * start multithreaded server. This requires a struct that defines the data to be passed to each thread, and a function that defines what the thread will do
+    */
+   int startServer(void *threadData, function<void *(void *)> threadFunction);
+
+   struct
+   {
+   } ThreadData;
+
 private:
    const int MAX_REQUESTS = 20;
    const char *port;
@@ -26,6 +36,7 @@ private:
 
    int createTcpSocket(const char *port, const char *server);
    int createNewSocket(addrinfo *servInfo);
+   int serverListenThread(void *threadData, function<void *(void *)> threadFunction);
 };
 
 #endif

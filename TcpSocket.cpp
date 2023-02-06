@@ -25,6 +25,11 @@ TcpSocket::TcpSocket(const char *port) : port(port), address(nullptr)
    }
 }
 
+// server not necessary for current implementation. We'll use python for the server
+int TcpSocket::startServer(void *threadData, function<void *(void *)> threadFunction)
+{
+}
+
 int TcpSocket::createTcpSocket(const char *port, const char *server)
 {
    // create server info structure
